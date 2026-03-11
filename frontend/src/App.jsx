@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Login from "./pages/Login";
 import Eventos from "./pages/Eventos";
+import DashboardAdmin from "./pages/DashboardAdmin";
 import MisInscripciones from "./pages/MisInscripciones";
 import InscritosEvento from "./pages/InscritosEvento";
 import AdminEventos from "./pages/AdminEventos";
@@ -21,8 +22,8 @@ export default function App() {
       setAuthToken(token);
       const u = JSON.parse(savedUser);
       setUser(u);
-      setView("eventos"); // vista inicial
-    }
+  setView(u.rol === "ADMIN" ? "dashboard" : "eventos");
+}
   }, []);
 
   const logout = () => {
@@ -33,7 +34,7 @@ export default function App() {
     setView("eventos");
   };
 
-  if (!user) return <Login onLogin={(u) => { setUser(u); setView("eventos"); }} />;
+  if (!user) return <Login onLogin={(u) => { setUser(u); setView(u.rol === "ADMIN" ? "dashboard" : "eventos"); }} />;
 
   return (
     <>
@@ -48,6 +49,14 @@ export default function App() {
               <Eventos user={user} />
             </div>
           )}
+
+
+          {view === "dashboard" && user.rol === "ADMIN" && (
+            <div className="card">
+              <DashboardAdmin user={user} setView={setView} />
+            </div>
+          )}
+
 
           {view === "mis" && user.rol === "CLIENTE" && (
             <div className="card">

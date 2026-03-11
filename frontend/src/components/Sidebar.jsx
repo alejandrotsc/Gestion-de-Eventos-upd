@@ -8,6 +8,7 @@ export default function Sidebar({ user, view, setView }) {
   ];
 
   const itemsAdmin = [
+    { key: "dashboard", label: "📊 Dashboard" },
     { key: "inscritos", label: "👥 Inscritos por evento" },
     { key: "admin_eventos", label: "🛠️ Panel eventos" },
     { key: "recursos", label: "🧩 Recursos" },

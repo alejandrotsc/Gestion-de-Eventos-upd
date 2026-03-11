@@ -507,3 +507,43 @@ select option {
     margin-bottom: 10px;
   }
 }
+
+
+/* =========================================
+   PRINT STYLES (Para exportar a PDF)
+   ========================================= */
+@media print {
+  .sidebar, 
+  .navbar, 
+  .no-print {
+    display: none !important;
+  }
+
+
+  .app-layout {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .main {
+    display: block !important;
+    width: 100% !important;
+  }
+
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+
+  .recharts-wrapper, .card {
+    page-break-inside: avoid !important;
+  }
+
+
+  body {
+    background: #070A12 !important;
+  }
+}
