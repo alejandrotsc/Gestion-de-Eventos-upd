@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+
 import Login from "./pages/Login";
 import Eventos from "./pages/Eventos";
 import DashboardAdmin from "./pages/DashboardAdmin";
@@ -6,13 +8,14 @@ import MisInscripciones from "./pages/MisInscripciones";
 import InscritosEvento from "./pages/InscritosEvento";
 import AdminEventos from "./pages/AdminEventos";
 import RecursosAdmin from "./pages/RecursosAdmin";
+
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
+
 import { setAuthToken } from "./api";
 
 export default function App() {
   const [user, setUser] = useState(null);
-  const [view, setView] = useState("eventos");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -22,8 +25,7 @@ export default function App() {
       setAuthToken(token);
       const u = JSON.parse(savedUser);
       setUser(u);
-  setView(u.rol === "ADMIN" ? "dashboard" : "eventos");
-}
+    }
   }, []);
 
   const logout = () => {
@@ -31,56 +33,102 @@ export default function App() {
     localStorage.removeItem("user");
     setAuthToken(null);
     setUser(null);
-    setView("eventos");
   };
 
-  if (!user) return <Login onLogin={(u) => { setUser(u); setView(u.rol === "ADMIN" ? "dashboard" : "eventos"); }} />;
+  if (!user)
+    return (
+      <Login
+        onLogin={(u) => {
+          setUser(u);
+        }}
+      />
+    );
 
   return (
     <>
       <Navbar user={user} logout={logout} />
 
       <div className="app-layout">
-        <Sidebar user={user} view={view} setView={setView} />
+        <Sidebar user={user} />
 
         <div className="main">
-          {view === "eventos" && (
-            <div className="card">
-              <Eventos user={user} />
-            </div>
-          )}
+          <Routes>
 
+            <Route
+              path="/"
+              element={
+                <div className="card">
+                  <Eventos user={user} />
+                </div>
+              }
+            />
 
-          {view === "dashboard" && user.rol === "ADMIN" && (
-            <div className="card">
-              <DashboardAdmin user={user} setView={setView} />
-            </div>
-          )}
+            <Route
+              path="/mis"
+              element={
+                user.rol === "CLIENTE" ? (
+                  <div className="card">
+                    <MisInscripciones user={user} />
+                  </div>
+                ) : (
+                  <Navigate to="/" />
+                )
+              }
+            />
 
+            <Route
+              path="/admin/dashboard"
+              element={
+                user.rol === "ADMIN" ? (
+                  <div className="card">
+                    <DashboardAdmin user={user} />
+                  </div>
+                ) : (
+                  <Navigate to="/" />
+                )
+              }
+            />
 
-          {view === "mis" && user.rol === "CLIENTE" && (
-            <div className="card">
-              <MisInscripciones user={user} />
-            </div>
-          )}
+            <Route
+              path="/admin/eventos"
+              element={
+                user.rol === "ADMIN" ? (
+                  <div className="card">
+                    <AdminEventos user={user} />
+                  </div>
+                ) : (
+                  <Navigate to="/" />
+                )
+              }
+            />
 
-          {view === "inscritos" && user.rol === "ADMIN" && (
-            <div className="card">
-              <InscritosEvento user={user} />
-            </div>
-          )}
+            <Route
+              path="/admin/inscritos"
+              element={
+                user.rol === "ADMIN" ? (
+                  <div className="card">
+                    <InscritosEvento user={user} />
+                  </div>
+                ) : (
+                  <Navigate to="/" />
+                )
+              }
+            />
 
-          {view === "admin_eventos" && user.rol === "ADMIN" && (
-            <div className="card">
-              <AdminEventos user={user} />
-            </div>
-          )}
+            <Route
+              path="/admin/recursos"
+              element={
+                user.rol === "ADMIN" ? (
+                  <div className="card">
+                    <RecursosAdmin user={user} />
+                  </div>
+                ) : (
+                  <Navigate to="/" />
+                )
+              }
+            />
 
-          {view === "recursos" && user.rol === "ADMIN" && (
-            <div className="card">
-              <RecursosAdmin user={user} />
-            </div>
-          )}
+          </Routes>
         </div>
       </div>
     </>
