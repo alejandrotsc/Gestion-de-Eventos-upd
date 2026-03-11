@@ -1,17 +1,21 @@
-export default function Sidebar({ user, view, setView }) {
+import { Link, useLocation } from "react-router-dom";
+
+export default function Sidebar({ user }) {
+  const location = useLocation();
+
   const itemsBase = [
-    { key: "eventos", label: "📅 Eventos" },
+    { path: "/", label: "📅 Eventos" },
   ];
 
   const itemsCliente = [
-    { key: "mis", label: "🧾 Mis inscripciones" },
+    { path: "/mis", label: "🧾 Mis inscripciones" },
   ];
 
   const itemsAdmin = [
-    { key: "dashboard", label: "📊 Dashboard" },
-    { key: "inscritos", label: "👥 Inscritos por evento" },
-    { key: "admin_eventos", label: "🛠️ Panel eventos" },
-    { key: "recursos", label: "🧩 Recursos" },
+    { path: "/admin/dashboard", label: "📊 Dashboard" },
+    { path: "/admin/inscritos", label: "👥 Inscritos por evento" },
+    { path: "/admin/eventos", label: "🛠️ Panel eventos" },
+    { path: "/admin/recursos", label: "🧩 Recursos" },
   ];
 
   const items =
@@ -25,14 +29,15 @@ export default function Sidebar({ user, view, setView }) {
 
       <div className="navlist">
         {items.map((it) => (
-          <button
-            key={it.key}
-            type="button"
-            className={`navbtn ${view === it.key ? "active" : ""}`}
-            onClick={() => setView(it.key)}
+          <Link
+            key={it.path}
+            to={it.path}
+            className={`navbtn ${
+              location.pathname === it.path ? "active" : ""
+            }`}
           >
             {it.label}
-          </button>
+          </Link>
         ))}
       </div>
 
