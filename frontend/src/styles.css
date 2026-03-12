@@ -547,3 +547,34 @@ select option {
     background: #070A12 !important;
   }
 }
+/* ===== EVENT TAGS ===== */
+
+.tag{
+  background: linear-gradient(90deg, #7C5CFF, #22D3EE);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-block;
+  margin-top: 6px;
+  box-shadow: 0 4px 10px rgba(0,0,0,.25);
+}
+
+/* colores según categoría */
+
+.tag.conferencia{
+  background: linear-gradient(90deg, #7C5CFF, #5B8CFF);
+}
+
+.tag.taller{
+  background: linear-gradient(90deg, #22D3EE, #0EA5E9);
+}
+
+.tag.seminario{
+  background: linear-gradient(90deg, #F59E0B, #FB923C);
+}
+
+.tag.social{
+  background: linear-gradient(90deg, #EC4899, #F43F5E);
+}
