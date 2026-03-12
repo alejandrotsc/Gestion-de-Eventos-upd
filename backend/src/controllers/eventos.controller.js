@@ -7,6 +7,12 @@ async function crearEvento(req, res) {
     if (!titulo || !fecha_inicio || !fecha_fin) {
       return res.status(400).json({ ok: false, msg: "titulo, fecha_inicio y fecha_fin son requeridos" });
     }
+
+    //Validar que la fecha fin sea lógicamente mayor a la fecha inicio
+    if (new Date(fecha_fin) <= new Date(fecha_inicio)) {
+      return res.status(400).json({ ok: false, msg: "La fecha de fin debe ser mayor a la fecha de inicio" });
+    }
+
     const [result] = await pool.query(
       `INSERT INTO eventos (titulo, descripcion, ubicacion, fecha_inicio, fecha_fin, cupo, created_by) VALUES (?,?,?,?,?,?,?)`,
       [titulo, descripcion || null, ubicacion || null, fecha_inicio, fecha_fin, Number(cupo || 0), req.user.id]

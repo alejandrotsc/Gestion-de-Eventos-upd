@@ -63,6 +63,11 @@ async function asignarRecursoEvento(req, res) {
 
     if (!recurso_id) return res.status(400).json({ ok:false, msg:"recurso_id requerido" });
 
+   //Evitar que asignen cantidades negativas o cero
+    if (cantidad !== undefined && Number(cantidad) <= 0) {
+      return res.status(400).json({ ok: false, msg: "La cantidad asignada debe ser mayor a 0" });
+    }
+
     // simple: validar existencia
     const [ev] = await pool.query("SELECT id FROM eventos WHERE id=?", [eventoId]);
     if (ev.length === 0) return res.status(404).json({ ok:false, msg:"Evento no existe" });
