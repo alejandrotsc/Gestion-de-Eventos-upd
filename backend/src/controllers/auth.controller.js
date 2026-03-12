@@ -73,8 +73,9 @@ async function registerAdmin(req, res) {
   try {
     const { nombre, email, password, setupKey } = req.body;
 
-    if (setupKey !== process.env.ADMIN_SETUP_KEY) {
-      return res.status(403).json({ ok: false, msg: "SetupKey inválida" });
+    // Validar que la variable de entorno exista y coincida
+    if (!process.env.ADMIN_SETUP_KEY || setupKey !== process.env.ADMIN_SETUP_KEY) {
+      return res.status(403).json({ ok: false, msg: "SetupKey inválida o servidor mal configurado" });
     }
 
     if (!nombre || !email || !password) {
