@@ -1,29 +1,106 @@
 const pool = require("../config/db");
 
-// CREATE (ADMIN)
+// VALIDACIÓN DE FECHAS
+function validarFechasEvento(fecha_inicio, fecha_fin) {
+  if (!fecha_inicio || !fecha_fin) {
+    return "Las fechas son requeridas";
+  }
+
+  const inicio = new Date(fecha_inicio);
+  const fin = new Date(fecha_fin);
+
+  if (fin <= inicio) {
+    return "La fecha de fin debe ser mayor a la fecha de inicio";
+  }
+
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+
+  inicio.setHours(0, 0, 0, 0);
+
+  if (inicio < hoy) {
+    return "La fecha de inicio no puede ser anterior a hoy";
+  }
+
+  return null;
+}
+
+// VALIDACIÓN DE CUPO
+function validarCupo(cupo) {
+  if (cupo === undefined || cupo === null) {
+    return "El cupo es requerido";
+  }
+
+  const cupoNum = Number(cupo);
+
+  if (isNaN(cupoNum)) {
+    return "El cupo debe ser un número válido";
+  }
+
+  if (cupoNum <= 0) {
+    return "El cupo debe ser mayor a 0";
+  }
+
+  return null;
+}
+
+// CREATE
 async function crearEvento(req, res) {
   try {
     const { titulo, descripcion, ubicacion, fecha_inicio, fecha_fin, cupo } = req.body;
+
     if (!titulo || !fecha_inicio || !fecha_fin) {
-      return res.status(400).json({ ok: false, msg: "titulo, fecha_inicio y fecha_fin son requeridos" });
+      return res.status(400).json({
+        ok: false,
+        msg: "titulo, fecha_inicio y fecha_fin son requeridos"
+      });
     }
 
-    //Validar que la fecha fin sea lógicamente mayor a la fecha inicio
-    if (new Date(fecha_fin) <= new Date(fecha_inicio)) {
-      return res.status(400).json({ ok: false, msg: "La fecha de fin debe ser mayor a la fecha de inicio" });
+    // Validar fechas
+    const errorFechas = validarFechasEvento(fecha_inicio, fecha_fin);
+    if (errorFechas) {
+      return res.status(400).json({ ok: false, msg: errorFechas });
     }
+
+    // Validar cupo
+    const errorCupo = validarCupo(cupo);
+    if (errorCupo) {
+      return res.status(400).json({ ok: false, msg: errorCupo });
+    }
+
+    const cupoNum = Number(cupo);
 
     const [result] = await pool.query(
-      `INSERT INTO eventos (titulo, descripcion, ubicacion, fecha_inicio, fecha_fin, cupo, created_by) VALUES (?,?,?,?,?,?,?)`,
-      [titulo, descripcion || null, ubicacion || null, fecha_inicio, fecha_fin, Number(cupo || 0), req.user.id]
+      `INSERT INTO eventos 
+      (titulo, descripcion, ubicacion, fecha_inicio, fecha_fin, cupo, created_by) 
+      VALUES (?,?,?,?,?,?,?)`,
+      [
+        titulo,
+        descripcion || null,
+        ubicacion || null,
+        fecha_inicio,
+        fecha_fin,
+        cupoNum,
+        req.user.id
+      ]
     );
-    return res.status(201).json({ ok: true, msg: "Evento creado", id: result.insertId });
+
+    return res.status(201).json({
+      ok: true,
+      msg: "Evento creado",
+      id: result.insertId
+    });
+
   } catch (err) {
-    return res.status(500).json({ ok: false, msg: "Error creando evento", error: err.message });
+    return res.status(500).json({
+      ok: false,
+      msg: "Error creando evento",
+      error: err.message
+    });
   }
 }
 
-// READ LIST (MODIFICADO CON FILTROS)
+// READ LIST
 async function listarEventos(req, res) {
   try {
     const { buscar, estado, soloDisponibles } = req.query;
@@ -64,26 +141,47 @@ async function listarEventos(req, res) {
     }
 
     if (soloDisponibles === 'true') {
-      query += " AND (e.cupo = 0 OR (e.cupo - IFNULL(x.inscritos_activos, 0)) > 0)";
+      query += " AND (e.cupo - IFNULL(x.inscritos_activos, 0)) > 0";
     }
 
     query += " ORDER BY e.fecha_inicio ASC";
 
     const [rows] = await pool.query(query, params);
+
     return res.json({ ok: true, data: rows });
+
   } catch (err) {
-    return res.status(500).json({ ok: false, msg: "Error listando eventos", error: err.message });
+    return res.status(500).json({
+      ok: false,
+      msg: "Error listando eventos",
+      error: err.message
+    });
   }
 }
 
 // READ ONE
 async function obtenerEvento(req, res) {
   try {
-    const [rows] = await pool.query("SELECT * FROM eventos WHERE id=?", [req.params.id]);
-    if (rows.length === 0) return res.status(404).json({ ok: false, msg: "Evento no encontrado" });
+    const [rows] = await pool.query(
+      "SELECT * FROM eventos WHERE id=?",
+      [req.params.id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        ok: false,
+        msg: "Evento no encontrado"
+      });
+    }
+
     return res.json({ ok: true, data: rows[0] });
+
   } catch (err) {
-    return res.status(500).json({ ok: false, msg: "Error obteniendo evento", error: err.message });
+    return res.status(500).json({
+      ok: false,
+      msg: "Error obteniendo evento",
+      error: err.message
+    });
   }
 }
 
@@ -91,29 +189,124 @@ async function obtenerEvento(req, res) {
 async function actualizarEvento(req, res) {
   try {
     const { titulo, descripcion, ubicacion, fecha_inicio, fecha_fin, cupo, estado } = req.body;
-    const [exist] = await pool.query("SELECT id FROM eventos WHERE id=?", [req.params.id]);
-    if (exist.length === 0) return res.status(404).json({ ok: false, msg: "Evento no encontrado" });
+
+    const [exist] = await pool.query(
+      "SELECT * FROM eventos WHERE id=?",
+      [req.params.id]
+    );
+
+    if (exist.length === 0) {
+      return res.status(404).json({
+        ok: false,
+        msg: "Evento no encontrado"
+      });
+    }
+
+    const eventoActual = exist[0];
+
+    // Validar fechas
+    const nuevaFechaInicio = fecha_inicio || eventoActual.fecha_inicio;
+    const nuevaFechaFin = fecha_fin || eventoActual.fecha_fin;
+
+    const errorFechas = validarFechasEvento(nuevaFechaInicio, nuevaFechaFin);
+    if (errorFechas) {
+      return res.status(400).json({ ok: false, msg: errorFechas });
+    }
+
+    // Validar cupo si viene
+    if (cupo !== undefined) {
+      const errorCupo = validarCupo(cupo);
+      if (errorCupo) {
+        return res.status(400).json({ ok: false, msg: errorCupo });
+      }
+
+      const nuevoCupo = Number(cupo);
+
+      const [inscritos] = await pool.query(
+        `SELECT COUNT(*) as total 
+         FROM inscripciones 
+         WHERE evento_id=? AND estado='ACTIVA'`,
+        [req.params.id]
+      );
+
+      const inscritosActivos = inscritos[0].total;
+
+      if (nuevoCupo < inscritosActivos) {
+        return res.status(400).json({
+          ok: false,
+          msg: `El cupo no puede ser menor a los inscritos actuales (${inscritosActivos})`
+        });
+      }
+    }
 
     await pool.query(
-      `UPDATE eventos SET titulo = COALESCE(?, titulo), descripcion = COALESCE(?, descripcion), ubicacion = COALESCE(?, ubicacion), fecha_inicio = COALESCE(?, fecha_inicio), fecha_fin = COALESCE(?, fecha_fin), cupo = COALESCE(?, cupo), estado = COALESCE(?, estado) WHERE id=?`,
-      [titulo ?? null, descripcion ?? null, ubicacion ?? null, fecha_inicio ?? null, fecha_fin ?? null, cupo !== undefined ? Number(cupo) : null, estado ?? null, req.params.id]
+      `UPDATE eventos SET 
+        titulo = COALESCE(?, titulo), 
+        descripcion = COALESCE(?, descripcion), 
+        ubicacion = COALESCE(?, ubicacion), 
+        fecha_inicio = COALESCE(?, fecha_inicio), 
+        fecha_fin = COALESCE(?, fecha_fin), 
+        cupo = COALESCE(?, cupo), 
+        estado = COALESCE(?, estado) 
+      WHERE id=?`,
+      [
+        titulo ?? null,
+        descripcion ?? null,
+        ubicacion ?? null,
+        fecha_inicio ?? null,
+        fecha_fin ?? null,
+        cupo !== undefined ? Number(cupo) : null,
+        estado ?? null,
+        req.params.id
+      ]
     );
+
     return res.json({ ok: true, msg: "Evento actualizado" });
+
   } catch (err) {
-    return res.status(500).json({ ok: false, msg: "Error actualizando evento", error: err.message });
+    return res.status(500).json({
+      ok: false,
+      msg: "Error actualizando evento",
+      error: err.message
+    });
   }
 }
 
 // DELETE
 async function eliminarEvento(req, res) {
   try {
-    const [exist] = await pool.query("SELECT id FROM eventos WHERE id=?", [req.params.id]);
-    if (exist.length === 0) return res.status(404).json({ ok: false, msg: "Evento no encontrado" });
-    await pool.query("DELETE FROM eventos WHERE id=?", [req.params.id]);
+    const [exist] = await pool.query(
+      "SELECT id FROM eventos WHERE id=?",
+      [req.params.id]
+    );
+
+    if (exist.length === 0) {
+      return res.status(404).json({
+        ok: false,
+        msg: "Evento no encontrado"
+      });
+    }
+
+    await pool.query(
+      "DELETE FROM eventos WHERE id=?",
+      [req.params.id]
+    );
+
     return res.json({ ok: true, msg: "Evento eliminado" });
+
   } catch (err) {
-    return res.status(500).json({ ok: false, msg: "Error eliminando evento", error: err.message });
+    return res.status(500).json({
+      ok: false,
+      msg: "Error eliminando evento",
+      error: err.message
+    });
   }
 }
 
-module.exports = { crearEvento, listarEventos, obtenerEvento, actualizarEvento, eliminarEvento };
+module.exports = {
+  crearEvento,
+  listarEventos,
+  obtenerEvento,
+  actualizarEvento,
+  eliminarEvento
+};
