@@ -90,13 +90,41 @@ async function crearEvento(req, res) {
       if (clientes.length > 0) {
         const correos = clientes.map(c => c.email).join(",");
         const asunto = `¡Nuevo Evento: ${titulo}! 🎉`;
-        const mensaje = `
-          <div style="font-family: Arial, sans-serif; color: #333;">
-            <h2 style="color: #7C5CFF;">Hola, tenemos un nuevo evento para ti</h2>
-            <p>Se ha creado el evento <b>${titulo}</b>.</p>
-            <p><b>📅 Fecha de inicio:</b> ${new Date(fecha_inicio).toLocaleString()}</p>
-            <p><b>📍 Ubicación:</b> ${ubicacion || 'Por definir'}</p>
-            <p>¡Ingresa a la plataforma para inscribirte antes de que se acaben los cupos!</p>
+const mensaje = `
+          <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 40px 20px; text-align: center;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+              
+
+              <div style="background: linear-gradient(135deg, #7C5CFF, #22D3EE); padding: 30px 20px;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 24px;">¡Nuevo Evento Disponible! 🎉</h1>
+              </div>
+              
+
+              <div style="padding: 30px 40px; text-align: left; color: #333333;">
+                <p style="font-size: 16px; line-height: 1.6; margin-top: 0;">Hola,</p>
+                <p style="font-size: 16px; line-height: 1.6;">Se ha programado un nuevo evento en nuestra plataforma y queremos que seas el primero en enterarte.</p>
+                
+
+                <div style="background-color: #f8fafc; border-left: 4px solid #7C5CFF; padding: 15px 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+                  <h2 style="margin: 0 0 10px 0; color: #1e293b; font-size: 20px;">${titulo}</h2>
+                  <p style="margin: 5px 0; font-size: 15px; color: #475569;"><strong>📅 Fecha:</strong> ${new Date(fecha_inicio).toLocaleString()}</p>
+                  <p style="margin: 5px 0; font-size: 15px; color: #475569;"><strong>📍 Ubicación:</strong> ${ubicacion || 'Por definir'}</p>
+                </div>
+                
+                <p style="font-size: 16px; line-height: 1.6;">¡Los cupos son limitados! Asegura tu lugar ingresando a la plataforma antes de que se agoten.</p>
+                
+
+                <div style="text-align: center; margin-top: 35px; margin-bottom: 10px;">
+                  <a href="http://localhost:5173" style="background: #7C5CFF; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">Inscribirme Ahora</a>
+                </div>
+              </div>
+              
+
+              <div style="background-color: #f1f5f9; padding: 15px; text-align: center; font-size: 12px; color: #64748b;">
+                <p style="margin: 0;">© ${new Date().getFullYear()} Gestión de Eventos. Todos los derechos reservados.</p>
+              </div>
+              
+            </div>
           </div>
         `;
         enviarCorreo(correos, asunto, mensaje);
@@ -291,11 +319,40 @@ async function actualizarEvento(req, res) {
       if (inscritos.length > 0) {
         const correos = inscritos.map(c => c.email).join(",");
         const asunto = `Actualización importante: Evento modificado ⚠️`;
-        const mensaje = `
-          <div style="font-family: Arial, sans-serif; color: #333;">
-            <h2 style="color: #f59e0b;">Aviso de actualización</h2>
-            <p>El evento <b>${titulo || eventoActual.titulo}</b> al que estás inscrito ha sufrido modificaciones en su información (fechas, ubicación o estado).</p>
-            <p>Por favor, ingresa a la plataforma para revisar los nuevos detalles.</p>
+const mensaje = `
+          <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 40px 20px; text-align: center;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+              
+
+              <div style="background: linear-gradient(135deg, #f59e0b, #ef4444); padding: 30px 20px;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Actualización de Evento ⚠️</h1>
+              </div>
+              
+   
+              <div style="padding: 30px 40px; text-align: left; color: #333333;">
+                <p style="font-size: 16px; line-height: 1.6; margin-top: 0;">Hola,</p>
+                <p style="font-size: 16px; line-height: 1.6;">Te informamos que el evento <strong>${titulo || eventoActual.titulo}</strong> al que estás inscrito ha sufrido modificaciones importantes.</p>
+                
+
+                <div style="background-color: #fffbeb; padding: 15px 20px; border-radius: 8px; color: #b45309; border: 1px solid #fde68a; margin: 20px 0;">
+                  <p style="margin: 0; font-size: 15px; line-height: 1.5;">
+                    Los cambios pueden incluir nuevas fechas, cambio de ubicación o modificaciones en el estado del evento.
+                  </p>
+                </div>
+                
+                <p style="font-size: 16px; line-height: 1.6;">Por favor, ingresa a tu panel para revisar los nuevos detalles y confirmar tu asistencia.</p>
+                
+
+                <div style="text-align: center; margin-top: 35px; margin-bottom: 10px;">
+                  <a href="http://localhost:5173" style="background: #f59e0b; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">Revisar Detalles</a>
+                </div>
+              </div>
+              
+              <div style="background-color: #f1f5f9; padding: 15px; text-align: center; font-size: 12px; color: #64748b;">
+                <p style="margin: 0;">© ${new Date().getFullYear()} Gestión de Eventos. Todos los derechos reservados.</p>
+              </div>
+              
+            </div>
           </div>
         `;
         enviarCorreo(correos, asunto, mensaje);
