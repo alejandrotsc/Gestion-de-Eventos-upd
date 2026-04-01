@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const { enviarCorreo } = require("../utils/mailer");
 
 // VALIDACIÓN DE FECHAS
 function validarFechasEvento(fecha_inicio, fecha_fin) {
@@ -73,8 +74,7 @@ async function crearEvento(req, res) {
     const [result] = await pool.query(
       `INSERT INTO eventos 
       (titulo, descripcion, ubicacion, fecha_inicio, fecha_fin, cupo, created_by) 
-      VALUES (?,?,?,?,?,?,?)`,
-      [
+      VALUES (?,?,?,?,?,?,?)`,[
         titulo,
         descripcion || null,
         ubicacion || null,
@@ -84,6 +84,27 @@ async function crearEvento(req, res) {
         req.user.id
       ]
     );
+
+    try {
+      const [clientes] = await pool.query("SELECT email FROM users WHERE rol = 'CLIENTE'");
+      if (clientes.length > 0) {
+        const correos = clientes.map(c => c.email).join(",");
+        const asunto = `¡Nuevo Evento: ${titulo}! 🎉`;
+        const mensaje = `
+          <div style="font-family: Arial, sans-serif; color: #333;">
+            <h2 style="color: #7C5CFF;">Hola, tenemos un nuevo evento para ti</h2>
+            <p>Se ha creado el evento <b>${titulo}</b>.</p>
+            <p><b>📅 Fecha de inicio:</b> ${new Date(fecha_inicio).toLocaleString()}</p>
+            <p><b>📍 Ubicación:</b> ${ubicacion || 'Por definir'}</p>
+            <p>¡Ingresa a la plataforma para inscribirte antes de que se acaben los cupos!</p>
+          </div>
+        `;
+        enviarCorreo(correos, asunto, mensaje);
+      }
+    } catch (mailErr) {
+      console.error("Error enviando correos de creación:", mailErr);
+    }
+    // ---------------------------------------------
 
     return res.status(201).json({
       ok: true,
@@ -128,7 +149,7 @@ async function listarEventos(req, res) {
       WHERE 1=1
     `;
 
-    const params = [];
+    const params =[];
 
     if (buscar) {
       query += " AND e.titulo LIKE ?";
@@ -146,7 +167,7 @@ async function listarEventos(req, res) {
 
     query += " ORDER BY e.fecha_inicio ASC";
 
-    const [rows] = await pool.query(query, params);
+    const[rows] = await pool.query(query, params);
 
     return res.json({ ok: true, data: rows });
 
@@ -248,8 +269,7 @@ async function actualizarEvento(req, res) {
         fecha_fin = COALESCE(?, fecha_fin), 
         cupo = COALESCE(?, cupo), 
         estado = COALESCE(?, estado) 
-      WHERE id=?`,
-      [
+      WHERE id=?`,[
         titulo ?? null,
         descripcion ?? null,
         ubicacion ?? null,
@@ -260,6 +280,29 @@ async function actualizarEvento(req, res) {
         req.params.id
       ]
     );
+
+    try {
+      const [inscritos] = await pool.query(`
+        SELECT u.email FROM users u
+        INNER JOIN inscripciones i ON u.id = i.user_id
+        WHERE i.evento_id = ? AND i.estado = 'ACTIVA'
+      `, [req.params.id]);
+
+      if (inscritos.length > 0) {
+        const correos = inscritos.map(c => c.email).join(",");
+        const asunto = `Actualización importante: Evento modificado ⚠️`;
+        const mensaje = `
+          <div style="font-family: Arial, sans-serif; color: #333;">
+            <h2 style="color: #f59e0b;">Aviso de actualización</h2>
+            <p>El evento <b>${titulo || eventoActual.titulo}</b> al que estás inscrito ha sufrido modificaciones en su información (fechas, ubicación o estado).</p>
+            <p>Por favor, ingresa a la plataforma para revisar los nuevos detalles.</p>
+          </div>
+        `;
+        enviarCorreo(correos, asunto, mensaje);
+      }
+    } catch (mailErr) {
+      console.error("Error enviando correos de actualización:", mailErr);
+    }
 
     return res.json({ ok: true, msg: "Evento actualizado" });
 
